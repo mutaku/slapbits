@@ -106,7 +106,7 @@ class Manage(Resource):
         return ' ', 403
 
 
-class ViewAll(Resource):
+class View(Resource):
     def __init__(self):
         self.args = parser.parse_args()
         # try to ID user or 404
@@ -134,13 +134,13 @@ class ViewAll(Resource):
 # API resources
 
 parser = reqparse.RequestParser()
-parser.add_argument('key', type=str, required=True)
-parser.add_argument('hash', type=str)
-parser.add_argument('url', type=url)
-parser.add_argument('note', type=str)
-parser.add_argument('private', type=str)
+parser.add_argument('key', type='str', required=True)
+parser.add_argument('hash', type='str')
+parser.add_argument('url', type='url')
+parser.add_argument('note', type='str')
+parser.add_argument('private', type='str')
 
-api.add_resource(ViewAll, '/')
+api.add_resource(View, '/')
 api.add_resource(Manage, '/post/')
 
 
