@@ -81,7 +81,7 @@ class Manage(Resource):
                     message="Need a hash.")
 
     def get(self):
-        obj = db.Post.query.filter_by(hash=self.args['hash']).first_or_404()
+        obj = db.Post.query.filter_by(hash=self.args['hash']).get_or_404()
         if obj.user.key == self.args['key']:
             return jsonify(obj)
         return ' ', 403
@@ -113,7 +113,7 @@ class ViewAll(Resource):
         if self.args.has_key('key'):
             objs = db.User.query.filter_by(key=self.args['key']).get_or_404().posts()
         else:
-            objs = db.Post.query.filter_by(private=False).get_or_404()
+            objs = db.Post.query.filter_by(private=False).all()
         return jsonify(objs)
 
     def post(self):
