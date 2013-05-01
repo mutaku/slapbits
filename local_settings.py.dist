@@ -1,0 +1,24 @@
+# local_settings.py.dist
+# copy to local_settings.py and edit accordingly
+
+import os
+_basedir = os.path.abspath(os.path.dirname(__file__))
+
+# Update with output from gimme_key.py
+SECRET_KEY = 'FILL_ME_IN'
+
+THREADS_PER_PAGE = 4
+
+CSRF_ENABLED = True
+# Update with output from gimme_key.py
+CSRF_SESSION_KEY = 'FILL_ME_IN'
+
+SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(_basedir, 'slapbits.db')
+DATABASE_CONNECT_OPTIONS = {}
+
+SECURITY_PASSWORD_HASH = 'bcrypt'
+# Update with output from gimme_key.py
+SECURITY_PASSWORD_SALT = 'FILL_ME_IN'
+
+# Update with output from gimme_key.py
+HASH_KEY = "FILL_ME_IN"
