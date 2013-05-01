@@ -79,6 +79,8 @@ class Manage(Resource):
         if not self.args['hash']:
             abort(404,
                     message="Need a hash.")
+        # try to ID user or 404
+        db.User.query.filter_by(key=self.args['key']).get_or_404()
 
     def get(self):
         obj = db.Post.query.filter_by(hash=self.args['hash']).get_or_404()
@@ -107,6 +109,8 @@ class Manage(Resource):
 class ViewAll(Resource):
     def __init__(self):
         self.args = parser.parse_args()
+        # try to ID user or 404
+        db.User.query.filter_by(key=self.args['key']).get_or_404()
 
     def get(self):
         # I don't like this approach here
