@@ -10,6 +10,7 @@ from flask import Flask, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.restful import reqparse, abort, Api, Resource
 from hashlib import sha224
+from local_settings import HASH_KEY
 
 app = Flask(__name__)
 app.config.from_object('local_settings')
@@ -21,7 +22,7 @@ db = SQLAlchemy(app)
 # Models
 
 def gen_hash(data, length=56):
-    return sha224(data).hexdigest()[:length]
+    return sha224(data+HASH_KEY).hexdigest()[:length]
 
 
 class User(db.Model):
@@ -58,7 +59,7 @@ class Post(db.Model):
     def __init__(self, url, note, user, private=False):
         self.url = url
         # should we be checking the hash before?
-        self.hash = gen_hash(link)
+        self.hash = gen_hash(url)
         self.note = note
         self.user = user
         self.private = private
@@ -85,9 +86,8 @@ class Manage(Resource):
             return jsonify(obj)
         return ' ', 403
 
-    # The following should update not create
     def put(self):
-        obj = db.Post.query.get(hash=self.args['hash']).get_or_404
+        obj = db.Post.query.get(hash=self.args['hash']).get_or_404()
         if obj.user.key == self.args['key']:
             obj.note = self.args['note']
             obj.note = self.args['private']
@@ -105,20 +105,19 @@ class Manage(Resource):
 
 
 class ViewAll(Resource):
-    ## we need to set this up so that we filter visibility
     def __init__(self):
         self.args = parser.parse_args()
 
     def get(self):
         # I don't like this approach here
         if self.args.has_key('key'):
-            objs = db.Post.query.filter_by(key=self.args['key']).get_or_404()
+            objs = db.User.query.filter_by(key=self.args['key']).get_or_404().posts()
         else:
-            objs = db.Post.all()
+            objs = db.Post.query.filter_by(private=False).get_or_404()
         return jsonify(objs)
 
     def post(self):
-        user = db.User.query.get(key=self.args['key'])
+        user = db.User.query.get(key=self.args['key']).get_or_404()
         post = db.Post(
                 url  = self.args['url'],
                 note = self.args['note'],
