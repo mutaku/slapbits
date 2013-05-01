@@ -6,7 +6,7 @@
 #   License: BSD
 #########################################
 
-from flask import Flask
+from flask import Flask, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.restful import reqparse, abort, Api, Resource
 from hashlib import sha224
@@ -72,11 +72,6 @@ class Post(db.Model):
 
 # Prepare Responses
 
-def make_json(query_obj):
-    # iterate over query_obj and build json return
-    pass
-
-
 class Manage(Resource):
     def __init__(self):
         self.args = parser.parse_args()
@@ -87,7 +82,7 @@ class Manage(Resource):
     def get(self):
         obj = db.Post.query.filter_by(hash=self.args['hash']).first_or_404()
         if obj.user.key == self.args['key']:
-            return make_json(obj)
+            return jsonify(obj)
         return ' ', 403
 
     # The following should update not create
@@ -97,7 +92,7 @@ class Manage(Resource):
             obj.note = self.args['note']
             obj.note = self.args['private']
             db.session.commit()
-            return make_json(obj), 201
+            return jsonify(obj), 201
         return ' ', 403
 
     def delete(self):
@@ -115,11 +110,12 @@ class ViewAll(Resource):
         self.args = parser.parse_args()
 
     def get(self):
+        # I don't like this approach here
         if self.args.has_key('key'):
             objs = db.Post.query.filter_by(key=self.args['key']).get_or_404()
         else:
             objs = db.Post.all()
-        return make_json(objs)
+        return jsonify(objs)
 
     def post(self):
         user = db.User.query.get(key=self.args['key'])
@@ -130,7 +126,7 @@ class ViewAll(Resource):
                 private = self.args['private'])
         db.session.add(post)
         db.session.commit()
-        return make_json(post), 201
+        return jsonify(post), 201
 
 # API resources
 
