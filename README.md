@@ -5,6 +5,20 @@
 
 For testing purposes, simply run `python slapbits.py` to get your server running at `http://127.0.0.1:5000`
 
+######Populating users
+```Python
+import slapbits
+
+new_user = slapbits.user(email="your_email_address")
+slapbits.db.add(new_user)
+slapbits.db.commit()
+
+#Your access key
+print new_user.key
+```
+
+######Basic access methods
+
 You can access via browser or with Python and Curl as outlined below. Further examples will utilize the Python Requests module.
 ```Python
 from requests import post, get
