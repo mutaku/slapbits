@@ -8,7 +8,7 @@
 
 from flask import Flask, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.restful import reqparse, abort, Api, Resource
+from flask.ext.restful import types, reqparse, abort, Api, Resource
 from hashlib import sha224
 from local_settings import HASH_KEY
 
@@ -88,28 +88,31 @@ def queryset_to_json(queryset):
 
 # Prepare Responses
 
-class View(Resource):
+class ViewPost(Resource):
     def __init__(self):
         self.args = parser.parse_args()
-        if not self.args['hash']:
+        if not self.args['hash'] and not self.args['id']:
             abort(404,
-                    message="Need a hash.")
-        # try to ID user or 404
-        User.query.filter_by(key=self.args['key']).first_or_404()
+                    message="Need a hash or id.")
 
     def post(self):
-        obj = Post.query.filter_by(hash=self.args['hash']).first_or_404()
-        if obj.author.key == self.args['key']:
+        if self.args['id']:
+            obj = Post.query.get_or_404(self.args['id'])
+        else:
+            obj = Post.query.filter_by(hash=self.args['hash']).first_or_404()
+        if self.args.has_key('key') and obj.author.key == self.args['key'] \
+                or obj.private is False:
             return queryset_to_json(obj)
         return ' ', 403
 
-class Update(Resource):
+
+class UpdatePost(Resource):
     def __init__(self):
         self.args = parser.parse_args()
         if not self.args['hash']:
             abort(404,
                     message="Need a hash.")
-        # try to ID user or 404
+        # try to ID user or 404 - not needed but saves us from proceeding
         User.query.filter_by(key=self.args['key']).first_or_404()
 
     def post(self):
@@ -120,24 +123,6 @@ class Update(Resource):
             db.session.commit()
             post_object = Post.query.get(obj.id)
             return queryset_to_json(post_object)
-        return ' ', 403
-
-class Delete(Resource):
-    def __init__(self):
-        self.args = parser.parse_args()
-        if not self.args['hash']:
-            abort(404,
-                    message="Need a hash.")
-        # try to ID user or 404
-        User.query.filter_by(key=self.args['key']).first_or_404()
-
-    def post(self):
-        obj = Post.query.filter_by(hash=self.args['hash']).first_or_404()
-        if obj.author.key == self.args['key']:
-            db.session.delete(obj)
-            db.session.commit
-            # Doesn't seem to be deleting
-            return 'Deleted'
         return ' ', 403
 
 
@@ -154,7 +139,7 @@ class ViewAll(Resource):
         return queryset_to_json(objs)
 
 
-class New(Resource):
+class AddPost(Resource):
     def __init__(self):
         self.args = parser.parse_args()
         # try to ID user or 404
@@ -171,20 +156,20 @@ class New(Resource):
         post_object = Post.query.get(post.id)
         return queryset_to_json(post_object)
 
+
 # API resources
-from flask.ext.restful import types
 parser = reqparse.RequestParser()
 parser.add_argument('key', type=str)
 parser.add_argument('hash', type=str)
-parser.add_argument('url', type=str)
+parser.add_argument('url', type=types.url)
 parser.add_argument('note', type=str)
 parser.add_argument('private', type=types.boolean)
+parser.add_argument('id', type=int)
 
 api.add_resource(ViewAll, '/')
-api.add_resource(New, '/new/')
-api.add_resource(View, '/post/')
-api.add_resource(Update, '/post/update/')
-api.add_resource(Delete, '/post/delete/')
+api.add_resource(AddPost, '/new/')
+api.add_resource(ViewPost, '/post/')
+api.add_resource(UpdatePost, '/post/update/')
 
 
 if __name__ == '__main__':
