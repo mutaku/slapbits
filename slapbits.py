@@ -113,13 +113,13 @@ class Update(Resource):
         User.query.filter_by(key=self.args['key']).first_or_404()
 
     def post(self):
-        obj = Post.query.filter_by(hash=self.args['hash']).first_or_404()
+        obj = Post.query.filter_by(hash=self.args['hash']).first()
         if obj.author.key == self.args['key']:
             obj.note = self.args['note']
-            obj.note = self.args['private']
+            obj.private = self.args['private']
             db.session.commit()
             post_object = Post.query.get(obj.id)
-            return queryset_to_json(post_object), 201
+            return queryset_to_json(post_object)
         return ' ', 403
 
 class Delete(Resource):
@@ -136,7 +136,8 @@ class Delete(Resource):
         if obj.author.key == self.args['key']:
             db.session.delete(obj)
             db.session.commit
-            return ' ', 204
+            # Doesn't seem to be deleting
+            return 'Deleted'
         return ' ', 403
 
 
@@ -168,7 +169,7 @@ class New(Resource):
         db.session.add(post)
         db.session.commit()
         post_object = Post.query.get(post.id)
-        return queryset_to_json(post_object), 201
+        return queryset_to_json(post_object)
 
 # API resources
 from flask.ext.restful import types
