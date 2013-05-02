@@ -33,15 +33,15 @@ class User(db.Model):
     key = db.Column(db.String(15),
             unique=True)
     posts = db.relationship('Post',
-            backref='user',
+            backref='author',
             lazy='dynamic')
 
     def __init__(self, email):
-        self.email = email
         self.key = gen_hash(email, length=15)
+        self.email = email
 
     def __repr__(self):
-        return '<User {0.id} - {0.email}'.format(self)
+        return '<User {0.email}>'.format(self)
 
 
 class Post(db.Model):
@@ -56,19 +56,16 @@ class Post(db.Model):
     private = db.Column(db.Boolean,
             default=False)
 
-    def __init__(self, url, note, user, private=False):
-        self.url = url
-        # should we be checking the hash before?
+    def __init__(self, url, note, author, private=False):
         self.hash = gen_hash(url)
+        self.url = url
         self.note = note
-        self.user = user
+        self.author = author
         self.private = private
 
-    def long_short(self):
-        return self.long_link[:50]
 
     def __repr__(self):
-        return '<Link {0.id} - {0.long_short()}'.format(self)
+        return '<Link {0.id} - {0.hash}>'.format(self)
 
 
 # Prepare Responses
@@ -89,7 +86,7 @@ class Manage(Resource):
         return ' ', 403
 
     def put(self):
-        obj = db.Post.query.get(hash=self.args['hash']).get_or_404()
+        obj = db.Post.query.filter_by(hash=self.args['hash']).get_or_404()
         if obj.user.key == self.args['key']:
             obj.note = self.args['note']
             obj.note = self.args['private']
@@ -98,7 +95,7 @@ class Manage(Resource):
         return ' ', 403
 
     def delete(self):
-        obj = db.Post.query.get(hash=self.args['hash']).get_or_404()
+        obj = db.Post.query.filter_by(hash=self.args['hash']).get_or_404()
         if obj.user.key == self.args['key']:
             db.session.delete(obj)
             db.session.commit
@@ -115,17 +112,17 @@ class View(Resource):
     def get(self):
         # I don't like this approach here
         if self.args.has_key('key'):
-            objs = db.User.query.filter_by(key=self.args['key']).get_or_404().posts()
+            objs = db.Post.query.join(User).filter(User.key==self.args['key'])
         else:
             objs = db.Post.query.filter_by(private=False).all()
         return jsonify(objs)
 
     def post(self):
-        user = db.User.query.get(key=self.args['key']).get_or_404()
+        user = db.User.query.filter_by(key=self.args['key']).get_or_404()
         post = db.Post(
                 url  = self.args['url'],
                 note = self.args['note'],
-                user = user,
+                author = user,
                 private = self.args['private'])
         db.session.add(post)
         db.session.commit()
