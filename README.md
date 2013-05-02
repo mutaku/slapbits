@@ -1,5 +1,7 @@
 #Slapbits 
 ######_A URL Holding and Annotation platform_
+Slapbits provides a RESTful API for saving and annotating URLs using the Flask framework.
+
 ***
 ####How to use:
 
