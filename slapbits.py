@@ -68,78 +68,123 @@ class Post(db.Model):
         return '<Link {0.id} - {0.hash}>'.format(self)
 
 
+def build_query_dictionary(obj):
+        data = dict()
+        data['url'] = obj.url
+        data['note'] = obj.note
+        data['private'] = obj.private
+        return data
+
+def queryset_to_json(queryset):
+    # this needs some work
+    result = dict()
+    if type(queryset) is list:
+        for obj in queryset:
+            result[obj.id] = build_query_dictionary(obj)
+    else:
+        result[queryset.id] = build_query_dictionary(queryset)
+    return jsonify(result)
+
+
 # Prepare Responses
 
-class Manage(Resource):
+class View(Resource):
     def __init__(self):
         self.args = parser.parse_args()
         if not self.args['hash']:
             abort(404,
                     message="Need a hash.")
         # try to ID user or 404
-        db.User.query.filter_by(key=self.args['key']).get_or_404()
+        User.query.filter_by(key=self.args['key']).first_or_404()
 
-    def get(self):
-        obj = db.Post.query.filter_by(hash=self.args['hash']).get_or_404()
-        if obj.user.key == self.args['key']:
-            return jsonify(obj)
+    def post(self):
+        obj = Post.query.filter_by(hash=self.args['hash']).first_or_404()
+        if obj.author.key == self.args['key']:
+            return queryset_to_json(obj)
         return ' ', 403
 
-    def put(self):
-        obj = db.Post.query.filter_by(hash=self.args['hash']).get_or_404()
-        if obj.user.key == self.args['key']:
+class Update(Resource):
+    def __init__(self):
+        self.args = parser.parse_args()
+        if not self.args['hash']:
+            abort(404,
+                    message="Need a hash.")
+        # try to ID user or 404
+        User.query.filter_by(key=self.args['key']).first_or_404()
+
+    def post(self):
+        obj = Post.query.filter_by(hash=self.args['hash']).first_or_404()
+        if obj.author.key == self.args['key']:
             obj.note = self.args['note']
             obj.note = self.args['private']
             db.session.commit()
-            return jsonify(obj), 201
+            post_object = Post.query.get(obj.id)
+            return queryset_to_json(post_object), 201
         return ' ', 403
 
-    def delete(self):
-        obj = db.Post.query.filter_by(hash=self.args['hash']).get_or_404()
-        if obj.user.key == self.args['key']:
+class Delete(Resource):
+    def __init__(self):
+        self.args = parser.parse_args()
+        if not self.args['hash']:
+            abort(404,
+                    message="Need a hash.")
+        # try to ID user or 404
+        User.query.filter_by(key=self.args['key']).first_or_404()
+
+    def post(self):
+        obj = Post.query.filter_by(hash=self.args['hash']).first_or_404()
+        if obj.author.key == self.args['key']:
             db.session.delete(obj)
             db.session.commit
             return ' ', 204
         return ' ', 403
 
 
-class View(Resource):
+class ViewAll(Resource):
+    def post(self):
+        self.args = parser.parse_args()
+        # try to ID user or 404
+        User.query.filter_by(key=self.args['key']).first()
+        objs = Post.query.join(User).filter(User.key==self.args['key']).all()
+        return queryset_to_json(objs)
+
+    def get(self):
+        objs = Post.query.filter_by(private=False).all()
+        return queryset_to_json(objs)
+
+
+class New(Resource):
     def __init__(self):
         self.args = parser.parse_args()
         # try to ID user or 404
-        db.User.query.filter_by(key=self.args['key']).get_or_404()
-
-    def get(self):
-        # I don't like this approach here
-        if self.args.has_key('key'):
-            objs = db.Post.query.join(User).filter(User.key==self.args['key'])
-        else:
-            objs = db.Post.query.filter_by(private=False).all()
-        return jsonify(objs)
+        self.user = User.query.filter_by(key=self.args['key']).first_or_404()
 
     def post(self):
-        user = db.User.query.filter_by(key=self.args['key']).get_or_404()
-        post = db.Post(
+        post = Post(
                 url  = self.args['url'],
                 note = self.args['note'],
-                author = user,
+                author = self.user,
                 private = self.args['private'])
         db.session.add(post)
         db.session.commit()
-        return jsonify(post), 201
+        post_object = Post.query.get(post.id)
+        return queryset_to_json(post_object), 201
 
 # API resources
-
+from flask.ext.restful import types
 parser = reqparse.RequestParser()
-parser.add_argument('key', type='str', required=True)
-parser.add_argument('hash', type='str')
-parser.add_argument('url', type='url')
-parser.add_argument('note', type='str')
-parser.add_argument('private', type='str')
+parser.add_argument('key', type=str)
+parser.add_argument('hash', type=str)
+parser.add_argument('url', type=str)
+parser.add_argument('note', type=str)
+parser.add_argument('private', type=types.boolean)
 
-api.add_resource(View, '/')
-api.add_resource(Manage, '/post/')
+api.add_resource(ViewAll, '/')
+api.add_resource(New, '/new/')
+api.add_resource(View, '/post/')
+api.add_resource(Update, '/post/update/')
+api.add_resource(Delete, '/post/delete/')
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
