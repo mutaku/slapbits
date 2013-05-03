@@ -116,8 +116,10 @@ class UpdatePost(Resource):
         User.query.filter_by(key=self.args['key']).first_or_404()
 
     def post(self):
-        obj = Post.query.filter_by(hash=self.args['hash']).first()
-        if obj.author.key == self.args['key']:
+        obj = Post.query.join(User).filter(
+                (User.key == self.args['key']) &
+                (Post.hash == self.args['hash'])).first()
+        if obj:
             obj.note = self.args['note']
             obj.private = self.args['private']
             db.session.commit()
@@ -129,9 +131,7 @@ class UpdatePost(Resource):
 class ViewAll(Resource):
     def post(self):
         self.args = parser.parse_args()
-        # try to ID user or 404
-        User.query.filter_by(key=self.args['key']).first()
-        objs = Post.query.join(User).filter(User.key==self.args['key']).all()
+        objs = Post.query.join(User).filter_by(key=self.args['key']).all()
         return queryset_to_json(objs)
 
     def get(self):
@@ -140,12 +140,9 @@ class ViewAll(Resource):
 
 
 class AddPost(Resource):
-    def __init__(self):
-        self.args = parser.parse_args()
-        # try to ID user or 404
-        self.user = User.query.filter_by(key=self.args['key']).first_or_404()
-
     def post(self):
+        self.args = parser.parse_args()
+        self.user = User.query.filter_by(key=self.args['key']).first_or_404()
         post = Post(
                 url  = self.args['url'],
                 note = self.args['note'],
@@ -166,10 +163,10 @@ parser.add_argument('note', type=str)
 parser.add_argument('private', type=types.boolean)
 parser.add_argument('id', type=int)
 
-api.add_resource(ViewAll, '/')
-api.add_resource(AddPost, '/new/')
-api.add_resource(ViewPost, '/post/')
-api.add_resource(UpdatePost, '/post/update/')
+api.add_resource(ViewAll, '/api/')
+api.add_resource(AddPost, '/api/new/')
+api.add_resource(ViewPost, '/api/post/')
+api.add_resource(UpdatePost, '/api/post/update/')
 
 
 if __name__ == '__main__':
