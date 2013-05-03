@@ -28,14 +28,14 @@ data = get('http://127.0.0.1:5000')
 data.json()
 ```
 ```Bash
-curl 'http://127.0.0.1:5000' -d "key=your_key_here"
+curl 'http://127.0.0.1:5000/api/' -d "key=your_key_here"
 ```
 
 ######Viewing posts 
 
 _anonymous_ Without a key you can view any posts that are set as `private=False` like:
 ```Python
-data = get('http://127.0.0.1:5000/')
+data = get('http://127.0.0.1:5000/api/')
 json_data = data.json()
 ```
 
@@ -43,7 +43,7 @@ json_data = data.json()
 
 _as a user_ You can supply your key via POST to get access to any posts where your key matches:
 ```Python
-data = post('http://127.0.0.1:5000/', data={'key': 'your_key_here'})
+data = post('http://127.0.0.1:5000/api/', data={'key': 'your_key_here'})
 json_data = data.json()
 ```
 
@@ -52,19 +52,19 @@ json_data = data.json()
 You can view a single post by referencing its HASH or ID. If you do not have a matching user key, you will only be able to retrieve `private=False` posts.
 ```Python
 # A public post by id
-data = post('http://127.0.0.1:5000/post/', data={'id': 5})
+data = post('http://127.0.0.1:5000/api/post/', data={'id': 5})
 json_data = data.json()
 
 # A public post by hash
-data = post('http://127.0.0.1:5000/post/', data={'hash': 'post_hash_here'})
+data = post('http://127.0.0.1:5000/api/post/', data={'hash': 'post_hash_here'})
 json_data = data.json()
 
 # A private post by id that belongs to your key
-data = post('http://127.0.0.1:5000/post/', data={'key': 'your_key_here', 'id': 'post_hash_here'})
+data = post('http://127.0.0.1:5000/api/post/', data={'key': 'your_key_here', 'id': 'post_hash_here'})
 json_data = data.json()
 
 # A private post by hash that belongs to your key
-data = post('http://127.0.0.1:5000/post/', data={'key': 'your_key_here', 'hash': 'post_hash_here'})
+data = post('http://127.0.0.1:5000/api/post/', data={'key': 'your_key_here', 'hash': 'post_hash_here'})
 json_data = data.json()
 ```
 
@@ -79,7 +79,7 @@ post_dict = {
     'private' = True}
 # Note that private defaults to False so if you do not set to True it is visible to all
 
-result = post('http://127.0.0.1:5000/new/', data=post_dict})
+result = post('http://127.0.0.1:5000/api/new/', data=post_dict})
 
 # A successful return will look like this
 # {post_id: {post_note, post_privacy_status, post_url}}
@@ -97,7 +97,7 @@ post_dict = {
     'hash' = 'post_hash_to_update',
     'note' = 'My updated note on this link.',
     'private' = True}
-result = post('http://127.0.0.1:5000/post/update/', data=post_dict})
+result = post('http://127.0.0.1:5000/api/post/update/', data=post_dict})
 
 # or with ID
 post_dict = {
@@ -105,5 +105,5 @@ post_dict = {
     'id' = 'post_id_to_update',
     'note' = 'My updated note on this link.',
     'private' = True}
-result = post('http://127.0.0.1:5000/post/update/', data=post_dict})
+result = post('http://127.0.0.1:5000/api/post/update/', data=post_dict})
 ```
