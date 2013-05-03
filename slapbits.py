@@ -63,16 +63,16 @@ class Post(db.Model):
         self.author = author
         self.private = private
 
-
     def __repr__(self):
         return '<Link {0.id} - {0.hash}>'.format(self)
 
 
 def build_query_dictionary(obj):
-        data = dict()
-        data['url'] = obj.url
-        data['note'] = obj.note
-        data['private'] = obj.private
+        data = obj.__dict__.copy()
+        del data['_sa_instance_state']
+        del data['user']
+        del data['id'] # we use this as result key
+        # SHOULD WE TAKE OUT HASH?
         return data
 
 def queryset_to_json(queryset):
