@@ -5,7 +5,16 @@ Slapbits provides a RESTful API for saving and annotating URLs using the Flask f
 ***
 ####How to use:
 
-For testing purposes, simply run `python slapbits.py` to get your server running at `http://127.0.0.1:5000`
+
+######Running the test server
+For testing purposes, simply run `python slapbits.py` to get your server running at `http://127.0.0.1:5000` or configure:
+```Shell
+python slapbits.py {-d -h host_ip_address -p port_number}
+
+-d -> debug mode
+-h host_ip_address -> server IP address (defaults to 127.0.0.1 for localhost only connections)
+-p port_number -> server port (defaults to 5000)
+```
 
 ######Populating users
 ```Python
