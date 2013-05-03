@@ -91,10 +91,18 @@ result.json()
 
 You may update the note or privacy status of any of your posts using _either_ hash or id like:
 ```Python
+# with HASH
 post_dict = {
     'key' = 'your_user_key',
-    'hash' = 'post_hash_to_update', # use this HASH
-    'id' = 'post_id_to_update',     # or use this ID
+    'hash' = 'post_hash_to_update',
+    'note' = 'My updated note on this link.',
+    'private' = True}
+result = post('http://127.0.0.1:5000/post/update/', data=post_dict})
+
+# or with ID
+post_dict = {
+    'key' = 'your_user_key',
+    'id' = 'post_id_to_update',
     'note' = 'My updated note on this link.',
     'private' = True}
 result = post('http://127.0.0.1:5000/post/update/', data=post_dict})
