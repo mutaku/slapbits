@@ -16,7 +16,7 @@ slapbits.db.add(new_user)
 slapbits.db.commit()
 
 #Your access key
-print new_user.key
+my_new_api_key = new_user.key
 ```
 
 ######Basic access methods
