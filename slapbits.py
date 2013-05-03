@@ -11,13 +11,15 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.restful import types, reqparse, abort, Api, Resource
 from hashlib import sha224
 from local_settings import HASH_KEY
+import sys
+import getopt
 
 app = Flask(__name__)
 app.config.from_object('local_settings')
 
 api = Api(app)
-db = SQLAlchemy(app)
 
+db = SQLAlchemy(app)
 
 # Models
 
@@ -170,4 +172,20 @@ api.add_resource(UpdatePost, '/api/post/update/')
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    vars = dict()
+    args = sys.argv[1:]
+    try:
+        opts, args = getopt.getopt(args, 'dh:p:')
+    except getopt.GetoptError:
+        sys.exit(2)
+
+    for opt, arg in opts:
+        # Enable debugging
+        if opt == '-d':
+            vars['debug'] = True
+        if opt == '-h':
+            vars['host'] = arg
+        if opt == '-p':
+            vars['port'] = int(arg)
+
+    app.run(**vars)
