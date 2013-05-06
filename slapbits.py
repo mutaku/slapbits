@@ -111,7 +111,7 @@ class ViewPost(Resource):
 class UpdatePost(Resource):
     def __init__(self):
         self.args = parser.parse_args()
-        if not self.args['hash'] and self.args['id']:
+        if not self.args['hash'] and not self.args['id']:
             abort(404,
                     message="Need a hash or id.")
         # try to ID user or 404 - not needed but saves us from proceeding
