@@ -13,6 +13,7 @@ from hashlib import sha224
 from local_settings import HASH_KEY
 import sys
 import getopt
+from sqlalchemy.exc import IntegrityError
 
 app = Flask(__name__)
 app.config.from_object('local_settings')
@@ -159,10 +160,12 @@ class AddPost(Resource):
                 author = self.user,
                 private = self.args['private'])
         db.session.add(post)
-        db.session.commit()
-        post_object = Post.query.get(post.id)
-        return queryset_to_json(post_object)
-
+        try:
+            db.session.commit()
+            post_object = Post.query.get(post.id)
+            return queryset_to_json(post_object)
+        except IntegrityError, error:
+            return jsonify({"Error adding": "URL already in database."})
 
 # API resources
 parser = reqparse.RequestParser()
