@@ -6,7 +6,8 @@
 #   License: BSD
 #########################################
 
-from flask import Flask, jsonify
+from flask import Flask
+from flask import jsonify as _jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.restful import types, reqparse, abort, Api, Resource
 from hashlib import sha224
@@ -60,15 +61,18 @@ class Post(db.Model):
             default=False)
 
     def __init__(self, url, note, author, private=False):
-        self.hash = gen_hash(url)
         self.url = url
         self.note = note
         self.author = author
         self.private = private
+        self.hash = gen_hash(url+self.author.key)
 
     def __repr__(self):
         return '<Link {0.id} - {0.hash}>'.format(self)
 
+
+
+# Utilities
 
 def build_query_dictionary(obj):
         data = obj.__dict__.copy()
@@ -79,7 +83,7 @@ def build_query_dictionary(obj):
         # SHOULD WE TAKE OUT HASH?
         return data
 
-def queryset_to_json(queryset):
+def queryset_to_json(queryset, status_code):
     # this needs some work
     result = dict()
     if isinstance(queryset, list):
@@ -87,7 +91,13 @@ def queryset_to_json(queryset):
             result[obj.id] = build_query_dictionary(obj)
     else:
         result[queryset.id] = build_query_dictionary(queryset)
-    return jsonify(result)
+    return jsonify(status_code, result)
+
+def jsonify(status_code, *args, **kwargs):
+    response = _jsonify(*args, **kwargs)
+    if status_code:
+        response.status_code = status_code
+    return response
 
 
 # Prepare Responses
@@ -106,7 +116,7 @@ class ViewPost(Resource):
             obj = Post.query.filter_by(hash=self.args['hash']).first_or_404()
         if (self.args['key'] and obj.author.key == self.args['key']
                 or not obj.private):
-            return queryset_to_json(obj)
+            return queryset_to_json(obj, 200)
         return ' ', 403
 
 
@@ -135,7 +145,7 @@ class UpdatePost(Resource):
             obj.private = self.args['private']
             db.session.commit()
             post_object = Post.query.get(obj.id)
-            return queryset_to_json(post_object)
+            return queryset_to_json(post_object, 201)
         return ' ', 403
 
 
@@ -143,11 +153,11 @@ class ViewAll(Resource):
     def post(self):
         self.args = parser.parse_args()
         objs = Post.query.join(User).filter_by(key=self.args['key']).all()
-        return queryset_to_json(objs)
+        return queryset_to_json(objs, 200)
 
     def get(self):
         objs = Post.query.filter_by(private=False).all()
-        return queryset_to_json(objs)
+        return queryset_to_json(objs, 200)
 
 
 class AddPost(Resource):
@@ -163,9 +173,9 @@ class AddPost(Resource):
         try:
             db.session.commit()
             post_object = Post.query.get(post.id)
-            return queryset_to_json(post_object)
+            return queryset_to_json(post_object, 201)
         except IntegrityError, error:
-            return jsonify({"Error adding": "URL already in database."})
+            return jsonify(418, Error=error.message)
 
 # API resources
 parser = reqparse.RequestParser()
