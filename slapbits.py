@@ -102,7 +102,7 @@ class ViewPost(Resource):
             obj = Post.query.get_or_404(self.args['id'])
         else:
             obj = Post.query.filter_by(hash=self.args['hash']).first_or_404()
-        if self.argsi['key'] and obj.author.key == self.args['key'] \
+        if self.args['key'] and obj.author.key == self.args['key'] \
                 or not obj.private:
             return queryset_to_json(obj)
         return ' ', 403
