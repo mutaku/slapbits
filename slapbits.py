@@ -102,8 +102,8 @@ class ViewPost(Resource):
             obj = Post.query.get_or_404(self.args['id'])
         else:
             obj = Post.query.filter_by(hash=self.args['hash']).first_or_404()
-        if self.args.has_key('key') and obj.author.key == self.args['key'] \
-                or obj.private is False:
+        if self.argsi['key'] and obj.author.key == self.args['key'] \
+                or not obj.private:
             return queryset_to_json(obj)
         return ' ', 403
 
@@ -111,7 +111,7 @@ class ViewPost(Resource):
 class UpdatePost(Resource):
     def __init__(self):
         self.args = parser.parse_args()
-        if not self.args['hash'] or not self.args['id']:
+        if not self.args['hash'] and self.args['id']:
             abort(404,
                     message="Need a hash or id.")
         # try to ID user or 404 - not needed but saves us from proceeding
