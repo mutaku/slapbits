@@ -178,7 +178,7 @@ api.add_resource(UpdatePost, '/api/post/update/')
 
 
 if __name__ == '__main__':
-    vars = dict()
+    vars = dict(debug=False)
     args = sys.argv[1:]
     try:
         opts, args = getopt.getopt(args, 'dh:p:')
