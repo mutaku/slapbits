@@ -71,10 +71,10 @@ class Post(db.Model):
 
 def build_query_dictionary(obj):
         data = obj.__dict__.copy()
-        del data['_sa_instance_state']
-        del data['user']
-        del data['author']
-        del data['id'] # we use this as result key
+        data.pop('_sa_instance_state', None)
+        data.pop('user', None)
+        data.pop('author', None)
+        data.pop('id', None) # we use this as result key
         # SHOULD WE TAKE OUT HASH?
         return data
 
