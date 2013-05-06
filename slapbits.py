@@ -194,4 +194,5 @@ if __name__ == '__main__':
         if opt == '-p':
             vars['port'] = int(arg)
 
+    Print "Running with {}".format(vars)
     app.run(**vars)
