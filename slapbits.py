@@ -80,7 +80,7 @@ def build_query_dictionary(obj):
 def queryset_to_json(queryset):
     # this needs some work
     result = dict()
-    if type(queryset) is list:
+    if isinstance(queryset, list):
         for obj in queryset:
             result[obj.id] = build_query_dictionary(obj)
     else:
