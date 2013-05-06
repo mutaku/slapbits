@@ -111,16 +111,22 @@ class ViewPost(Resource):
 class UpdatePost(Resource):
     def __init__(self):
         self.args = parser.parse_args()
-        if not self.args['hash']:
+        if not self.args['hash'] or not self.args['id']:
             abort(404,
-                    message="Need a hash.")
+                    message="Need a hash or id.")
         # try to ID user or 404 - not needed but saves us from proceeding
         User.query.filter_by(key=self.args['key']).first_or_404()
 
     def post(self):
-        obj = Post.query.join(User).filter(
-                (User.key == self.args['key']) &
-                (Post.hash == self.args['hash'])).first()
+        # this needs improved
+        if self.args['hash']:
+            obj = Post.query.join(User).filter(
+                    (User.key == self.args['key']) &
+                    (Post.hash == self.args['hash'])).first()
+        else:
+            obj = Post.query.join(User).filter(
+                    (User.key == self.args['key']) &
+                    (Post.id == self.args['id'])).first()
         if obj:
             obj.note = self.args['note']
             obj.private = self.args['private']
