@@ -11,7 +11,6 @@ from flask import jsonify as _jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.restful import types, reqparse, abort, Api, Resource
 from hashlib import sha224
-from local_settings import HASH_KEY
 import sys
 import getopt
 from sqlalchemy.exc import IntegrityError
@@ -72,7 +71,7 @@ class Post(db.Model):
 # Utilities
 
 def gen_hash(data, length=56):
-    return sha224(data+HASH_KEY).hexdigest()[:length]
+    return sha224(data+app.config['HASH_KEY']).hexdigest()[:length]
 
 def build_query_dictionary(obj):
         data = obj.__dict__.copy()
