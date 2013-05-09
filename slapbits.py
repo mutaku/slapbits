@@ -16,6 +16,7 @@ import sys
 import getopt
 from sqlalchemy.exc import IntegrityError
 
+
 app = Flask(__name__)
 app.config.from_object('local_settings')
 
@@ -23,11 +24,8 @@ api = Api(app)
 
 db = SQLAlchemy(app)
 
+
 # Models
-
-def gen_hash(data, length=56):
-    return sha224(data+HASH_KEY).hexdigest()[:length]
-
 
 class User(db.Model):
     id = db.Column(db.Integer,
@@ -71,8 +69,10 @@ class Post(db.Model):
         return '<Link {0.id} - {0.hash}>'.format(self)
 
 
-
 # Utilities
+
+def gen_hash(data, length=56):
+    return sha224(data+HASH_KEY).hexdigest()[:length]
 
 def build_query_dictionary(obj):
         data = obj.__dict__.copy()
@@ -83,7 +83,7 @@ def build_query_dictionary(obj):
         # SHOULD WE TAKE OUT HASH?
         return data
 
-def queryset_to_json(queryset, status_code):
+def queryset_to_json(status_code, queryset):
     # this needs some work
     result = dict()
     if isinstance(queryset, list):
@@ -116,7 +116,7 @@ class ViewPost(Resource):
             obj = Post.query.filter_by(hash=self.args['hash']).first_or_404()
         if (self.args['key'] and obj.author.key == self.args['key']
                 or not obj.private):
-            return queryset_to_json(obj, 200)
+            return queryset_to_json(200, obj)
         return ' ', 403
 
 
@@ -145,7 +145,7 @@ class UpdatePost(Resource):
             obj.private = self.args['private']
             db.session.commit()
             post_object = Post.query.get(obj.id)
-            return queryset_to_json(post_object, 201)
+            return queryset_to_json(201, post_object)
         return ' ', 403
 
 
@@ -153,11 +153,11 @@ class ViewAll(Resource):
     def post(self):
         self.args = parser.parse_args()
         objs = Post.query.join(User).filter_by(key=self.args['key']).all()
-        return queryset_to_json(objs, 200)
+        return queryset_to_json(200, objs)
 
     def get(self):
         objs = Post.query.filter_by(private=False).all()
-        return queryset_to_json(objs, 200)
+        return queryset_to_json(200, objs)
 
 
 class AddPost(Resource):
@@ -173,24 +173,38 @@ class AddPost(Resource):
         try:
             db.session.commit()
             post_object = Post.query.get(post.id)
-            return queryset_to_json(post_object, 201)
+            return queryset_to_json(201, post_object)
         except IntegrityError, error:
             return jsonify(418, Error=error.message)
 
+
 # API resources
+
+arguments = (
+    ('key', str),
+    ('hash', str),
+    ('url', types.url),
+    ('note', str),
+    ('private', types.boolean),
+    ('id', int)
+    )
+
 parser = reqparse.RequestParser()
-parser.add_argument('key', type=str)
-parser.add_argument('hash', type=str)
-parser.add_argument('url', type=types.url)
-parser.add_argument('note', type=str)
-parser.add_argument('private', type=types.boolean)
-parser.add_argument('id', type=int)
+for arg, arg_type in arguments:
+    parser.add_argument(arg, type=arg_type)
 
-api.add_resource(ViewAll, '/api/')
-api.add_resource(AddPost, '/api/new/')
-api.add_resource(ViewPost, '/api/post/')
-api.add_resource(UpdatePost, '/api/post/update/')
+views = (
+    (ViewAll, '/api/'),
+    (AddPost, '/api/new/'),
+    (ViewPost, '/api/post/'),
+    (UpdatePost, '/api/post/update/')
+    )
 
+for view_method, endpoint in views:
+    api.add_resource(view_method, endpoint)
+
+
+# Instantiation with built-in server
 
 if __name__ == '__main__':
     vars = dict(debug=False)
