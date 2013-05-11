@@ -6,7 +6,7 @@
 #   License: BSD
 #########################################
 
-from flask import Flask
+from flask import Flask, render_template
 from flask import jsonify as _jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.restful import types, reqparse, abort, Api, Resource
@@ -14,6 +14,7 @@ from hashlib import sha224
 import sys
 import getopt
 from sqlalchemy.exc import IntegrityError
+from datetime import datetime
 
 
 app = Flask(__name__)
@@ -48,6 +49,7 @@ class User(db.Model):
 class Post(db.Model):
     id = db.Column(db.Integer,
             primary_key=True)
+    create_date = db.Column(db.DateTime)
     hash = db.Column(db.String(56),
             unique=True)
     url = db.Column(db.Text)
@@ -57,12 +59,14 @@ class Post(db.Model):
     private = db.Column(db.Boolean,
             default=False)
 
-    def __init__(self, url, note, author, private=False):
+    def __init__(self, url, note, author, create_date=None, private=False):
         self.url = url
         self.note = note
         self.author = author
         self.private = private
         self.hash = gen_hash(url+self.author.key)
+        if not create_date:
+            self.create_date = datetime.utcnow()
 
     def __repr__(self):
         return '<Link {0.id} - {0.hash}>'.format(self)
@@ -79,7 +83,9 @@ def build_query_dictionary(obj):
         data.pop('user', None)
         data.pop('author', None)
         data.pop('id', None) # we use this as result key
-        # SHOULD WE TAKE OUT HASH?
+        # could be improved - can't jsonify datetime object
+        if data.has_key('create_date'):
+            data['create_date'] = data['create_date'].strftime("%m-%d-%Y %H:%m")
         return data
 
 def queryset_to_json(status_code, queryset):
@@ -175,6 +181,13 @@ class AddPost(Resource):
             return queryset_to_json(201, post_object)
         except IntegrityError, error:
             return jsonify(418, Error=error.message)
+
+
+# HTML/Browser views
+@app.route('/')
+def index_list():
+    objs = Post.query.filter_by(private=False).all()
+    return render_template('show_all_public.html', qs=objs)
 
 
 # API resources

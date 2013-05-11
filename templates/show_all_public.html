@@ -1,0 +1,17 @@
+{% extends "master.html" %}
+{% block body %}
+<div data-role="content-primary">
+    <ul data-role="listview" data-theme="d" data-divider-theme="d">    
+    {% for post in qs %}
+        <li data-role="list-divider">Post {{ post.id }} {{ post.create_date.strftime('%m-%d-%Y %H:%m') }}</li>
+        <li><a href="{{ post.url }}">
+                <p class="post_url">{{ post.url }}</p>
+                <p class="post_note">{{ post.note }}</p>
+                <p class="post_hash">hash: {{ post.hash }}</p>
+                <p class="post_private">private: {{ post.private }}</p>
+            </a>
+        </li>
+    {% endfor %}
+    </ul>
+</div>
+{% endblock %}
