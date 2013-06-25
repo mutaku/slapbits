@@ -81,6 +81,8 @@ def build_query_dictionary(obj):
         data = obj.__dict__.copy()
         data.pop('_sa_instance_state', None)
         data.pop('user', None)
+        # throw in short url
+        data['short'] = "/short/{}".format(data['id'])
         data.pop('author', None)
         data.pop('id', None) # we use this as result key
         # could be improved - can't jsonify datetime object
@@ -168,12 +170,15 @@ class ViewAll(Resource):
 class AddPost(Resource):
     def post(self):
         self.args = parser.parse_args()
+        print self.args
         self.user = User.query.filter_by(key=self.args['key']).first_or_404()
+        # convert private string to Boolean
+        privacy = self.args['private'] == "true"
         post = Post(
                 url  = self.args['url'],
                 note = self.args['note'],
                 author = self.user,
-                private = self.args['private'])
+                private = privacy)
         db.session.add(post)
         try:
             db.session.commit()
@@ -197,7 +202,7 @@ arguments = (
     ('hash', str),
     ('url', types.url),
     ('note', str),
-    ('private', types.boolean),
+    ('private', str),
     ('id', int)
     )
 
