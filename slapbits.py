@@ -82,7 +82,7 @@ def build_query_dictionary(obj):
         data.pop('_sa_instance_state', None)
         data.pop('user', None)
         # throw in short url
-        data['short'] = "/short/{}".format(data['id'])
+        data['short'] = "short/{}".format(data['id'])
         data.pop('author', None)
         data.pop('id', None) # we use this as result key
         # could be improved - can't jsonify datetime object
