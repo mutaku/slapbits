@@ -20,9 +20,9 @@ python slapbits.py {-d -h host_ip_address -p port_number}
 ```Python
 import slapbits
 
-new_user = slapbits.user(email="your_email_address")
-slapbits.db.add(new_user)
-slapbits.db.commit()
+new_user = slapbits.User(email="your_email_address")
+slapbits.db.session.add(new_user)
+slapbits.db.session.commit()
 
 #Your access key
 my_new_api_key = new_user.key
